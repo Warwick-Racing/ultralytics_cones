@@ -1,7 +1,11 @@
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 import rclpy
+
 import ultralytics
+
+import cv2
+from cv_bridge import CvBridge
 
 class ImageNode(Node):
     def __init__(self):
@@ -13,9 +17,18 @@ class ImageNode(Node):
             10)
         self.publisher = self.create_publisher(Image, 'output_image_topic', 10)
 
+        self._bridge = CvBridge()
+        self._model = ultralytics.YOLO('yolov8n.pt')  # or your custom model
+
     def listener_callback(self, msg):
         # Process the incoming image message and publish it
         self.get_logger().info('Received an image message')
+
+ 
+
+        cv_image = self._bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        results = self._model.predict(cv_image)
+
         # Here you can add image processing logic
         self.publisher.publish(msg)
         self.get_logger().info('Published an image message')
