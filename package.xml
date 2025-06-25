@@ -1,0 +1,10 @@
+<package format="2">
+  <name>ultralytics_cones</name>
+  <version>0.0.1</version>
+  <description>A ROS package for processing sensor_msgs::msg::Image topics using Ultralytics.</description>
+  <maintainer email="your_email@example.com">Your Name</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+</package>
