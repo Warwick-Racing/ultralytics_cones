@@ -1,41 +1,30 @@
 # ultralytics_cones
 
-## Overview
-The `ultralytics_cones` package is a ROS (Robot Operating System) package designed to process images from a camera sensor. It subscribes to a `sensor_msgs::msg::Image` topic, processes the image data, and publishes the modified image to another `sensor_msgs::msg::Image` topic.
+This package, `ultralytics_cones`, is designed to provide a ROS2 node that outputs messages of type `std_msgs` at a specified interval. 
 
-## Installation
-To install the `ultralytics_cones` package, follow these steps:
+## Package Structure
 
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   ```
-2. Navigate to the package directory:
-   ```
-   cd ultralytics_cones
-   ```
-3. Install the package using `rosdep`:
-   ```
-   rosdep install --from-paths src --ignore-src -r -y
-   ```
-4. Build the package:
-   ```
-   colcon build
-   ```
+- `ultralytics_cones/`: The main package directory containing the Python code.
+  - `__init__.py`: Marks the directory as a Python package.
+  - `image_node.py`: Contains the implementation of the ROS2 node that publishes messages.
+  
+- `launch/`: Directory for launch files.
+  - `demo.py`: A placeholder for a launch file that will be implemented in the future.
+
+- `resource/`: Directory intended for resources related to the package.
+  - `ultralytics_cones/`: This folder will eventually contain files such as `demo.mp4`.
+
+- `package.xml`: Defines the package metadata, including dependencies and version information.
+
+- `setup.py`: Used for packaging the Python project, specifying the package name, version, and entry points.
+
+- `setup.cfg`: Contains configuration settings for the package, including metadata and options for packaging.
 
 ## Usage
-To run the image processing node, use the following command:
-```
-ros2 run ultralytics_cones image_node
-```
 
-## Dependencies
-This package requires the following ROS 2 packages:
-- `sensor_msgs`
-- Any other dependencies specified in `package.xml`.
+To run the `image_node`, ensure that you have ROS2 installed and properly set up. You can then build the package and run the node using the appropriate ROS2 commands.
 
-## Contributing
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+## Future Work
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for more details.
+- Implement the functionality in `launch/demo.py`.
+- Add resources such as `demo.mp4` in the `resource/ultralytics_cones` directory.
