@@ -37,8 +37,6 @@ class ImageNode(Node):
                 self.get_logger().warn(f"Invalid output_res format: '{res}'. Expected format 'WIDTHxHEIGHT'. Disabling resizing.")
             self._output_size = None
 
-        self.declare_parameter('output_grey', False)
-        self._output_grey = self.get_parameter('output_grey').get_parameter_value().bool_value
        
         self._colors = [(255, 0, 0), (0, 100, 255), (0, 255, 255)]
 
