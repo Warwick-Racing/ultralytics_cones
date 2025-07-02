@@ -82,7 +82,7 @@ class ImageNode(Node):
 
         # if resize param has been set, resize and publish color and grey topics
         if self._output_size and (self.resized.get_subscription_count() > 0 or self.resizedgray.get_subscription_count() > 0):
-            resized_img = cv2.resize(self._outimg, self._output_size, interpolation=cv2.INTER_LINEAR)
+            resized_img = cv2.resize(self._outimg, self._output_size, interpolation=cv2.INTER_NEAREST)
 
             if self.resized.get_subscription_count() > 0:
                 self.resized.publish(self._bridge.cv2_to_imgmsg(resized_img, encoding='bgr8'))
