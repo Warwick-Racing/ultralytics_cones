@@ -37,8 +37,8 @@ class ImageNode(Node):
                 self.get_logger().warn(f"Invalid output_res format: '{res}'. Expected format 'WIDTHxHEIGHT'. Disabling resizing.")
             self._output_size = None
 
-       
-        self._colors = [(255, 0, 0), (0, 100, 255), (0, 255, 255)]
+        #self._colors = [(255, 0, 0), (0, 100, 255), (0, 255, 255)]
+        self._colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
 
         self._bridge = CvBridge()
         self._model = ultralytics.YOLO(model_path)  # or your custom model
