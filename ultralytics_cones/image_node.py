@@ -1,5 +1,6 @@
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
 import rclpy
 
 import ultralytics
@@ -7,6 +8,7 @@ import numpy as np
 
 import cv2
 from cv_bridge import CvBridge
+
 
 class ImageNode(Node):
     def __init__(self):
@@ -22,6 +24,7 @@ class ImageNode(Node):
         self.gray = self.create_publisher(Image, '~/output/grey', 10)
         self.resizedgray = self.create_publisher(Image, '~/output/resized/gray', 10)
         self.debug = self.create_publisher(Image, '~/debug', 10)
+        self.detections = self.create_publisher(Detection2DArray, '~/detections', 10)
 
         # ==== Parameters ===
         self.declare_parameter('model_path', 'yolov8n.pt')
@@ -44,6 +47,31 @@ class ImageNode(Node):
         self._model = ultralytics.YOLO(model_path)  # or your custom model
         self._outimg = None
 
+    def __detections_to_msg(self, result, header):
+        detections_msg = Detection2DArray()
+        detections_msg.header = header
+
+        for box in result.boxes:
+            det = Detection2D()
+            det.header = header
+
+            x1, y1, x2, y2 = map(float, box.xyxy[0])
+            det.bbox.center.position.x = (x1 + x2) * 0.5
+            det.bbox.center.position.y = (y1 + y2) * 0.5
+            det.bbox.center.theta = 0.0
+            det.bbox.size_x = max(0.0, x2 - x1)
+            det.bbox.size_y = max(0.0, y2 - y1)
+
+            for class_id, conf in zip(box.cls, box.conf):
+                hyp = ObjectHypothesisWithPose()
+                hyp.hypothesis.class_id = self._model.names.get(int(class_id), "")
+                hyp.hypothesis.score = float(conf)
+                det.results.append(hyp)
+
+            detections_msg.detections.append(det)
+
+        return detections_msg
+
     def listener_callback(self, msg):
         # Process the incoming image message and publish it
         self.get_logger().debug('Received an image message')
@@ -51,11 +79,27 @@ class ImageNode(Node):
         cv_image = self._bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         result = self._model.predict(cv_image, save=False, verbose=False)[0]
 
+        # publish detection message if there are subscribers
+        if self.detections.get_subscription_count() > 0:
+            detections_msg = self.__detections_to_msg(result, msg.header)
+            self.detections.publish(detections_msg)
+
+        # publish the debug topic
+        if self.debug.get_subscription_count() > 0:
+            debug_img = result.plot()
+            self.debug.publish(self._bridge.cv2_to_imgmsg(debug_img, encoding='bgr8'))
+
+        # no need to do any processing if no one is listening to the image topics
+        if self.publisher.get_subscription_count() == 0 and \
+           self.gray.get_subscription_count() == 0 and \
+           self.resized.get_subscription_count() == 0:
+            return  
+
         if self._outimg is None:
             self._outimg = np.zeros_like(cv_image)
         else:
             self._outimg.fill(0)
-        
+
         boxes_sorted = sorted(result.boxes, key=lambda box: box.xywh[0][1])
         for box in boxes_sorted:
             # Get box coordinates (xyxy format)
@@ -90,11 +134,6 @@ class ImageNode(Node):
                 resized_gray_img = cv2.cvtColor(resized_img, cv2.COLOR_BGR2GRAY)
                 self.resizedgray.publish(self._bridge.cv2_to_imgmsg(resized_gray_img, encoding='mono8'))
                 self.get_logger().debug('Published a resized grey image message')
-
-        # publish the debug topic
-        if self.debug.get_subscription_count() > 0:
-            debug_img = result.plot()
-            self.debug.publish(self._bridge.cv2_to_imgmsg(debug_img, encoding='bgr8'))
 
 
 def main(args=None):
