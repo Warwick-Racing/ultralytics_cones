@@ -1,5 +1,6 @@
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
 import rclpy
 
@@ -24,6 +25,7 @@ class ImageNode(Node):
         self.gray = self.create_publisher(Image, '~/output/grey', 10)
         self.resizedgray = self.create_publisher(Image, '~/output/resized/gray', 10)
         self.debug = self.create_publisher(Image, '~/debug', 10)
+        self.debug_compressed = self.create_publisher(CompressedImage, '~/debug/compressed', 10)
         self.detections = self.create_publisher(Detection2DArray, '~/detections', 10)
 
         # ==== Parameters ===
@@ -84,10 +86,21 @@ class ImageNode(Node):
             detections_msg = self.__detections_to_msg(result, msg.header)
             self.detections.publish(detections_msg)
 
-        # publish the debug topic
-        if self.debug.get_subscription_count() > 0:
+        # publish the debug topic (raw and/or compressed)
+        if self.debug.get_subscription_count() > 0 or self.debug_compressed.get_subscription_count() > 0:
             debug_img = result.plot()
-            self.debug.publish(self._bridge.cv2_to_imgmsg(debug_img, encoding='bgr8'))
+
+            if self.debug.get_subscription_count() > 0:
+                self.debug.publish(self._bridge.cv2_to_imgmsg(debug_img, encoding='bgr8'))
+
+            if self.debug_compressed.get_subscription_count() > 0:
+                success, encoded = cv2.imencode('.jpg', debug_img)
+                if success:
+                    compressed_msg = CompressedImage()
+                    compressed_msg.header = msg.header
+                    compressed_msg.format = 'jpeg'
+                    compressed_msg.data = encoded.tobytes()
+                    self.debug_compressed.publish(compressed_msg)
 
         # no need to do any processing if no one is listening to the image topics
         if self.publisher.get_subscription_count() == 0 and \
